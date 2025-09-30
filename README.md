@@ -29,6 +29,8 @@ Instructors: Francesco Bruschi, Vincenzo Rana, Andrea Rizzini
 **[Python_sound_1.ipynb](./Python_sound_1.ipynb)** -  Jupyter Python notebook
 - Playing sounds with `sounddevice` in Python
 
+**[python_sound/sound_aula1.py](./python_sound/sound_aula1.py)** - Script that generates a short melody with ADSR-style envelopes using `sounddevice`
+
 #### **Introduction to sound in Python with `sounddevice`**
 **[python_sound.md](./python_sound.md)**
 
