@@ -36,7 +36,7 @@ Instructors: Francesco Bruschi, Vincenzo Rana, Andrea Rizzini
 
 #### **Introduction to version control**
 
-**[versioncontrol.md](./versiocontrol.md)**
+**[versioncontrol.md](./versiocontrol.md)** --> [**recording**](https://politecnicomilano.webex.com/recordingservice/sites/politecnicomilano/recording/d5fe78ebe7df4109aac986d2578bbb30/playback)
 
 ---
 
