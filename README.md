@@ -30,13 +30,16 @@ Instructors: Francesco Bruschi, Vincenzo Rana, Andrea Rizzini
 - Playing sounds with `sounddevice` in Python
 
 **[python_sound/sound_aula1.py](./python_sound/sound_aula1.py)** - Script that generates a short melody with ADSR-style envelopes using `sounddevice`
+**[python_sound/](./python_sound/)** - Directory with the latest sound experiments, assets, and utilities used during the 2025 update
 
 #### **Introduction to sound in Python with `sounddevice`**
+
 **[python_sound.md](./python_sound.md)**  
 
 #### **Introduction to version control**
 
 **[versioncontrol.md](./versiocontrol.md)** --> [**recording**](https://politecnicomilano.webex.com/recordingservice/sites/politecnicomilano/recording/d5fe78ebe7df4109aac986d2578bbb30/playback)
+
 
 ---
 

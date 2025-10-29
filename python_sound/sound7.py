@@ -2,7 +2,7 @@ import sounddevice as sd
 from random import random
 from math import sin, pi, pow
 
-sample_rate = 44100
+sample_rate = 48000
 
 
 def create_wave(f, t):
@@ -54,8 +54,6 @@ def safe_get(l, i):
 def mix_waves(wave1, wave2):
     result = []
     for i in range(max(len(wave1), len(wave2))):
-        if not i % 1000:
-            print(i)
         result.append(safe_get(wave1, i) + safe_get(wave2, i))
     return result
 
@@ -114,6 +112,65 @@ wave = mix_waves(wave_sawtooth, wave_triangular)
 wave = mix_waves(wave, kicks_wave)
 wave = mix_waves(wave, hihats_wave)
 
+lead_sequence = [0, None, 2, None, 4, None, 0, None] * 2
+hihat_sequence = [1, 1, 1, 1] * 4
+kick_sequence = [1, 0] * 8
+
+
+def silence(duration):
+    return [0.0] * int(sample_rate * duration)
+
+
+def lead_step(step, duration):
+    if step is None:
+        return silence(duration)
+    else:
+        return envelope_wave(
+            create_sawtooth_wave(440 * interval_to_freq(step), duration)
+        )
+
+
+def hihat_step(step, duration):
+    if step is 0:
+        return silence(duration)
+    return hihat(duration)
+
+
+def kick_step(step, duration):
+    if step is 0:
+        return silence(duration)
+    return kick(duration)
+
+
+step_duration = 0.50
+
+lead_clips = [lead_step(step, step_duration) for step in lead_sequence]
+hihat_clips = [hihat_step(step, step_duration) for step in hihat_sequence]
+kick_clips = [kick_step(step, step_duration) for step in kick_sequence]
+
+
+# def instrument_clips(step_function, steps):
+#     return [step_function(step, step_duration) for step in steps]
+
+# lead_clips = instrument_clips(lead_step, lead_sequence)
+# hihat_clips = instrument_clips(hih, lead_sequence)
+# lead_clips = instrument_clips(lead_step, lead_sequence)
+
+
+lead_wave = sum(lead_clips, [])
+hihat_wave = sum(hihat_clips, [])
+kick_wave = sum(kick_clips, [])
+
+
+sound_wave = mix_waves(lead_wave, hihat_wave)
+sound_wave = mix_waves(sound_wave, kick_wave)
+
+# ------------------------
+# lead    |0 2 4 0 2 4
+# kick    |1.0 1 0
+# hihat   |1 1 1 1
+# ------------------------
+
 if __name__ == "__main__":
-    sd.play(wave)
+    sd.play(sound_wave)
     sd.wait()
