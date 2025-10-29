@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Hot Reload Example</title>
+</head>
+<body>
+    <button id="playA">A</button>
+    <button id="playB">B</button>
+    <button id="playC">C</button>
+  <h1>👋</h1>
+  <script>
+    const c = new AudioContext();
+    const o = c.createOscillator();
+    o.connect(c.destination);
+    o.start();
+    const playAButton = document.getElementById("playA");
+    const playBButton = document.getElementById("playB");
+    const playCButton = document.getElementById("playC");
+    playAButton.onclick = function() {c.resume(); o.frequency.value = 440}
+    playBButton.onclick = () => o.frequency.value = 440*Math.pow(2, 2/12);
+    playCButton.onclick = () => o.frequency.value = 440*Math.pow(2, 4/12);
+  </script>
+</body>
+</html>
