@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+  <h1>Web Audio fun</h1>
+  <button id="changeFrequency">change frequency</button>
+  <script>
+    const c = new AudioContext();
+    const o = c.createOscillator();
+    o.connect(c.destination);
+    o.start();
+    o.frequency.value = 550;
+    document.body.onclick = () => c.resume();
+    document.getElementById("changeFrequency").onclick = () => o.frequency.value = 220;
+
+  </script>
+</body>
+</html>
+

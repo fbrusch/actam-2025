@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+  <h1>Web Audio fun</h1>
+  <input
+  type="range"
+  id="frequencySlider"
+  min="220"
+  max="10000"
+  step="1"
+  value="220"
+/>
+  <script>
+    const c = new AudioContext();
+    const o = c.createOscillator();
+    o.connect(c.destination);
+    o.start();
+    o.frequency.value = 550;
+    document.body.onclick = () => c.resume();
+    const slider = document.getElementById("frequencySlider")
+    slider.oninput = (value) => o.frequency.value = slider.value;
+  </script>
+</body>
+</html>
+
+// excercises:
+// create some buttons that allow to play different notes (A, B, C# etc), and play Fra Martino
+// ...

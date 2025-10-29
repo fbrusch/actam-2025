@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+  <h1>Web Audio fun</h1>
+  <button id="startLFO">Start LFO</button>
+  <script>
+    const c = new AudioContext();
+    const o = c.createOscillator();
+    const g = c.createGain();
+    const lfo = c.createOscillator();
+
+    o.connect(g);
+    g.connect(c.destination);
+    lfo.connect(g.gain);
+
+
+    o.frequency.value = 440;
+    g.gain.value = 1;
+    lfo.frequency.value = 10;
+
+    o.start();
+
+    document.body.onclick = () => c.resume();
+    document.getElementById("startLFO").onclick = () => lfo.start();
+    
+  </script>
+</body>
+</html>
+

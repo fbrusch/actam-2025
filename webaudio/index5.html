@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+  <h1>Web Audio fun</h1>
+  <input
+  type="range"
+  id="gainSlider"
+  min="0"
+  max="1"
+  step="0.01"
+  value="0.5"
+/>
+  <script>
+    const c = new AudioContext();
+    const o = c.createOscillator();
+    const g = c.createGain();
+    
+    o.connect(g);
+    g.connect(c.destination);
+    
+    o.frequency.value = 440;
+    g.gain.value = 1;
+    
+    o.start();
+    const gainSlider = document.getElementById("gainSlider");
+    gainSlider.oninput = () => g.gain.value = gainSlider.value;
+    document.body.onclick = () => c.resume();
+    
+  </script>
+</body>
+</html>
+

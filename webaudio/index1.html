@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Hot Reload Example</title>
+</head>
+<body>
+  <h1>👋</h1>
+  <script>
+    const c = new AudioContext();
+    const o = c.createOscillator();
+    o.connect(c.destination);
+    o.start();
+  </script>
+</body>
+</html>
