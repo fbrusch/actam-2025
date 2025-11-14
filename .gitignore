@@ -32,3 +32,6 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+#Ignore vscode AI rules
+.github/instructions/codacy.instructions.md

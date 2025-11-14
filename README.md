@@ -45,8 +45,11 @@ Instructors: Francesco Bruschi, Vincenzo Rana, Andrea Rizzini
 Codepen link here --> **https://codepen.io/andrea-rizzini**  
 Github repo here --> **https://github.com/andrea-rizzini/Drum-Machine**  
 Drum machine till pattern buttons (31/10/2025 ) --> [**recording**](https://politecnicomilano.webex.com/recordingservice/sites/politecnicomilano/recording/995281dd78d44fdd9d1635c5acb9b0f2/playback)  
-Drum machine patterns and Firebase (03/11/2025 ) --> [**recording**](https://politecnicomilano.webex.com/recordingservice/sites/politecnicomilano/recording/db25396a78fc4241b95e84103ebe10aa/playback)
+Drum machine patterns and Firebase (03/11/2025 ) --> [**recording**](https://politecnicomilano.webex.com/recordingservice/sites/politecnicomilano/recording/db25396a78fc4241b95e84103ebe10aa/playback)  
 
+**Webaudio exercises**  
+
+You can find the code in the [**webaudio_exercises**](./webaudio_exercises/) folder
 
 ---
 
