@@ -58,7 +58,7 @@ class AudioRouter {
         connections.innerHTML = ''; // Clear existing connections
 
         const createConnection = (start, end) => {
-            const startRect = start.getBoundingClientRect(); // this gives me the posizion and size of the element
+            const startRect = start.getBoundingClientRect(); // this gives me the position and size of the element
             const endRect = end.getBoundingClientRect();
             const diagramRect = document.querySelector('.routing-diagram').getBoundingClientRect();
 
