@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    button {
+      padding: 6px 12px;
+      margin-bottom: 12px;
+    }
+    .steps {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .step {
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      padding: 8px;
+      width: 120px;
+    }
+    .step.active {
+      border-color: #007bff;
+      background: #e6f0ff;
+    }
+    label {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.9rem;
+      gap: 4px;
+    }
+    .sliders label {
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Web Audio fun</h1>
+  <button id="startStop">Start</button>
+  <div class="steps">
+    <label class="step">Step 1
+      <input class="noteSlider" type="range" min="-12" max="12" value="0">
+    </label>
+    <label class="step">Step 2
+      <input class="noteSlider" type="range" min="-12" max="12" value="4">
+    </label>
+    <label class="step">Step 3
+      <input class="noteSlider" type="range" min="-12" max="12" value="7">
+    </label>
+    <label class="step">Step 4
+      <input class="noteSlider" type="range" min="-12" max="12" value="12">
+    </label>
+  </div>
+  <div class="sliders">
+    <label>Attack (ms)
+      <input id="attackSlider" type="range" min="20" max="1000" value="200">
+    </label>
+    <label>Release (ms)
+      <input id="releaseSlider" type="range" min="20" max="1000" value="200">
+    </label>
+    <label>Tempo (BPS)
+      <input id="tempoSlider" type="range" min="1" max="8" value="2">
+    </label>
+  </div>
+  <script>
+    const c = new AudioContext();
+    const noteSliders = Array.from(document.querySelectorAll('.noteSlider'));
+    const stepLabels = Array.from(document.querySelectorAll('.step'));
+    const attackSlider = document.getElementById('attackSlider');
+    const releaseSlider = document.getElementById('releaseSlider');
+    const tempoSlider = document.getElementById('tempoSlider');
+    const startStop = document.getElementById('startStop');
+    let currentStep = 0;
+    let isPlaying = false;
+    let intervalId = null;
+    
+    function noteToFreq(semitones) {
+      return 440 * Math.pow(2, semitones / 12);
+    }
+    
+    function highlightStep(index) {
+      stepLabels.forEach((label, i) => {
+        label.classList.toggle('active', i === index);
+      });
+    }
+    
+    function clearHighlight() {
+      stepLabels.forEach(label => label.classList.remove('active'));
+    }
+    
+    function playNote(freq, attack, release, startTime) {
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.frequency.setValueAtTime(freq, startTime);
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(1, startTime + attack);
+      gain.gain.linearRampToValueAtTime(0, startTime + attack + release);
+      osc.connect(gain);
+      gain.connect(c.destination);
+      osc.start(startTime);
+      osc.stop(startTime + attack + release);
+    }
+    
+    async function playStep() {
+      await c.resume();
+      const now = c.currentTime;
+      const attack = attackSlider.value / 1000;
+      const release = releaseSlider.value / 1000;
+      const semitones = parseInt(noteSliders[currentStep].value, 10);
+      const freq = noteToFreq(semitones);
+      highlightStep(currentStep);
+      playNote(freq, attack, release, now);
+      currentStep = (currentStep + 1) % noteSliders.length;
+    }
+    
+    function startSequencer() {
+      if (isPlaying) return;
+      isPlaying = true;
+      startStop.textContent = 'Stop';
+      const interval = 1000 / parseInt(tempoSlider.value, 10);
+      playStep();
+      intervalId = setInterval(() => {
+        playStep();
+      }, interval);
+    }
+    
+    function stopSequencer() {
+      isPlaying = false;
+      startStop.textContent = 'Start';
+      currentStep = 0;
+      clearHighlight();
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    }
+    
+    startStop.addEventListener('click', () => {
+      if (isPlaying) {
+        stopSequencer();
+      } else {
+        startSequencer();
+      }
+    });
+    
+    tempoSlider.addEventListener('change', () => {
+      if (isPlaying) {
+        stopSequencer();
+        startSequencer();
+      }
+    });
+    
+  </script>
+</body>
+</html>

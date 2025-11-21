@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+  <h1>Web Audio fun</h1>
+  <button id="playA">Play A</button>
+  <button id="playB">Play B</button>
+  <script>
+    const c = new AudioContext();
+    const o = c.createOscillator();
+    const g = c.createGain();
+    const attack = 0.2;  // 200 ms
+    const release = 0.2; // 200 ms
+    
+    o.connect(g);
+    g.connect(c.destination);
+    
+    o.frequency.value = 440;
+    g.gain.value = 0;
+    
+    o.start();
+    
+    async function scheduleNote(frequency) {
+      await c.resume();
+      const now = c.currentTime;
+      o.frequency.setValueAtTime(frequency, now);
+      g.gain.cancelScheduledValues(now);
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(1, now + attack);
+      g.gain.linearRampToValueAtTime(0, now + attack + release);
+    }
+    
+    document.getElementById('playA').addEventListener('click', () => {
+      scheduleNote(440);
+    });
+    
+    document.getElementById('playB').addEventListener('click', () => {
+      const bFreq = 440 * Math.pow(2, 2 / 12);
+      scheduleNote(bFreq);
+    });
+    
+  </script>
+</body>
+</html>
