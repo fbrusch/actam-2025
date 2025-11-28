@@ -1,7 +1,6 @@
 # Instructions 
 
 Create a simple web interface where you can manipulate one or more audio effects over one input signal.
-Make a new directory with your name like in the example folder my_name.
 
 ## Goals
 

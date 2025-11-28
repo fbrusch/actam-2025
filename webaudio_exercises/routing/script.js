@@ -45,7 +45,7 @@ class AudioRouter {
             this.gainNode1.connect(this.audioContext.destination);
         }
 
-        this.updateConnectionsDisplay();
+        this.updateConnectionsDisplay(); // Update visual connections
     }
 
     toggleRouting() {

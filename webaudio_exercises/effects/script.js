@@ -17,7 +17,6 @@ frequencyControl.addEventListener('input', updateFrequency);
 dryWetControl.addEventListener('input', updateDryWet);
 
 // Create impulse response for reverb
-// generates an artificial impulse response by filling a buffer with randomized values that decay over time
 function createImpulseResponse(duration = 2, decay = 2.0) {
     const sampleRate = audioContext.sampleRate;
     const length = sampleRate * duration;
@@ -26,7 +25,7 @@ function createImpulseResponse(duration = 2, decay = 2.0) {
     for (let channel = 0; channel < 2; channel++) {
         const channelData = impulse.getChannelData(channel);
         for (let i = 0; i < length; i++) {
-            channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay); // random values that decay over time. Larger values of decay create a slower decay
+            channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay); // random values that decay over timeperh
         }
     }
     
@@ -40,7 +39,7 @@ async function initAudio() {
         
         // my nodes
         oscillator = audioContext.createOscillator();
-        convolverNode = audioContext.createConvolver();
+        convolverNode = audioContext.createConvolver(); // reverb node
         dryGainNode = audioContext.createGain();
         wetGainNode = audioContext.createGain();
         
@@ -63,7 +62,7 @@ async function initAudio() {
         
         oscillator.start();
         
-        // aggiorna ui
+        // update UI
         startButton.disabled = true;
         stopButton.disabled = false;
         
