@@ -164,7 +164,7 @@
                 // Key elements
                 const keys = document.querySelectorAll('.key');
                 
-                // *** Function to handle key press animation
+                // *** Function to handle key press animation, called by playSound and loop playback functions
                 function animateKey(key) {
                     const keyElement = document.querySelector(`[data-key="${key}"]`); 
                     if (keyElement) {
@@ -204,14 +204,15 @@
                 }
 
                 // Handle keyboard events
-                document.addEventListener('keydown', async (e) => { // when a button is pressed
-                    if (e.repeat) return;
+                document.addEventListener('keydown', async (e) => { // this event happens when a key is pressed 
+                    if (e.repeat) return; // avoid handling repeated events when key is held down
                     const key = e.key.toUpperCase();
+                    console.log("Key pressed: ", key);
 
                     // Handle spacebar for stop
                     if (e.code === 'Space') {
-                        e.preventDefault();
-                        stopEverything();
+                        e.preventDefault(); // prevent page scrolling
+                        stopEverything(); 
                         return;
                     }
 

@@ -126,7 +126,7 @@ const harmonics = ["A3", "B3", "E4", "A3"];
 
 let index = 0; // to keep track of the current note
 
-// Every 2 beats ("2n") you play a note that lasts 1 beat ("4n")
+// Every "2n" you play a note that lasts "4n"
 Tone.Transport.scheduleRepeat((time) => { // time is the exact time the note will be played, given by the Transport
     synth.triggerAttackRelease(melody[index], "4n", time);
     synth2.triggerAttackRelease(harmonics[index], "4n", time);

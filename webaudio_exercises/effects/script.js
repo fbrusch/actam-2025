@@ -25,7 +25,7 @@ function createImpulseResponse(duration = 2, decay = 2.0) {
     for (let channel = 0; channel < 2; channel++) {
         const channelData = impulse.getChannelData(channel);
         for (let i = 0; i < length; i++) {
-            channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay); // random values that decay over timeperh
+            channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay); // random values that decay over time
         }
     }
     
