@@ -56,6 +56,8 @@ You can find the code in the [**webaudio_exercises**](./webaudio_exercises/) fol
 **Webaudio visualization + intro to Tone.js**  
 01/12/2025 --> [**recording**](https://politecnicomilano.webex.com/recordingservice/sites/politecnicomilano/recording/7d4df3a826fa48059c901e5de8fad0bd/playback)
 
+**Tone.js**  
+03/12/2025 --> [**recording**](https://politecnicomilano.webex.com/recordingservice/sites/politecnicomilano/recording/9043c11081854094be3e38a4f0dcd361/playback)  
 ---
 
 ## 🎵 Live Coding Example
