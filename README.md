@@ -49,7 +49,15 @@ Drum machine patterns and Firebase (03/11/2025 ) --> [**recording**](https://pol
 
 **Webaudio exercises**  
 
-You can find the code in the [**webaudio_exercises**](./webaudio_exercises/) folder  --> [**recording**](https://politecnicomilano.webex.com/recordingservice/sites/politecnicomilano/recording/87850c0fac3a4fbcb5b0aff1725b9ed1/playback)
+You can find the code in the [**webaudio_exercises**](./webaudio_exercises/) folder  
+14/11/2025 --> [**recording**](https://politecnicomilano.webex.com/recordingservice/sites/politecnicomilano/recording/87850c0fac3a4fbcb5b0aff1725b9ed1/playback)  
+28/11/2025 -->  [**recording**](https://polimi365-my.sharepoint.com/:u:/g/personal/10867674_polimi_it/IQB4WrRqmQUEQKJz6MnWdKvgAWPTWTMRxIKylQFzR_bYwxk?e=ieWKe6) (one-drive link, download the recording file from there)
+
+**Webaudio visualization + intro to Tone.js**  
+01/12/2025 --> [**recording**](https://politecnicomilano.webex.com/recordingservice/sites/politecnicomilano/recording/7d4df3a826fa48059c901e5de8fad0bd/playback)
+
+**Tone.js**  
+03/12/2025 --> [**recording**](https://politecnicomilano.webex.com/recordingservice/sites/politecnicomilano/recording/9043c11081854094be3e38a4f0dcd361/playback)  
 
 ---
 

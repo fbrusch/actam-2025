@@ -38,35 +38,34 @@
   </style>
 </head>
 <body>
-  <h1>Web Audio fun</h1>
   <button id="startStop">Start</button>
   <button id="toggleComp">Bypass Compressor</button>
   <div class="steps">
     <label class="step">Step 1
-      <input class="noteSlider" type="range" min="-12" max="12" value="-5">
+      <input class="noteSlider" type="range" min="-12" max="12" value="0">
     </label>
     <label class="step">Step 2
-      <input class="noteSlider" type="range" min="-12" max="12" value="-2">
+      <input class="noteSlider" type="range" min="-12" max="12" value="3">
     </label>
     <label class="step">Step 3
-      <input class="noteSlider" type="range" min="-12" max="12" value="2">
-    </label>
-    <label class="step">Step 4
       <input class="noteSlider" type="range" min="-12" max="12" value="7">
     </label>
-    
+    <label class="step">Step 4
+      <input class="noteSlider" type="range" min="-12" max="12" value="8">
+    </label>
   </div>
   <div class="sliders">
     <label>Attack (ms)
-      <input id="attackSlider" type="range" min="20" max="1000" value="30">
+      <input id="attackSlider" type="range" min="5" max="200" value="20">
     </label>
     <label>Release (ms)
-      <input id="releaseSlider" type="range" min="20" max="1000" value="180">
+      <input id="releaseSlider" type="range" min="50" max="1000" value="120">
     </label>
     <label>Tempo (BPS)
-      <input id="tempoSlider" type="range" min="1" max="8" value="3">
+      <input id="tempoSlider" type="range" min="1" max="8" value="2.4">
     </label>
   </div>
+
   <script>
     const c = new AudioContext();
     const noteSliders = Array.from(document.querySelectorAll('.noteSlider'));
@@ -78,30 +77,30 @@
     let currentStep = 0;
     let isPlaying = false;
     let intervalId = null;
-    
+
     function noteToFreq(semitones) {
       return 440 * Math.pow(2, semitones / 12);
     }
-    
+
     function highlightStep(index) {
       stepLabels.forEach((label, i) => {
         label.classList.toggle('active', i === index);
       });
     }
-    
+
     function clearHighlight() {
       stepLabels.forEach(label => label.classList.remove('active'));
     }
-    
+
     const compressor = c.createDynamicsCompressor();
-    compressor.threshold.setValueAtTime(-24, c.currentTime);
+    compressor.threshold.setValueAtTime(-24, c.currentTime); // in dB
     compressor.knee.setValueAtTime(30, c.currentTime);
     compressor.ratio.setValueAtTime(12, c.currentTime);
     compressor.attack.setValueAtTime(0.003, c.currentTime);
     compressor.release.setValueAtTime(0.25, c.currentTime);
     compressor.connect(c.destination);
     let compressorBypassed = true;
-    
+
     function connectNode(node) {
       if (compressorBypassed) {
         node.connect(c.destination);
@@ -109,43 +108,90 @@
         node.connect(compressor);
       }
     }
-    
-    function playNote(freq, attack, release, startTime) {
-      const osc = c.createOscillator();
-      const gain = c.createGain();
-      osc.frequency.setValueAtTime(freq, startTime);
-      gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(1, startTime + attack);
-      gain.gain.linearRampToValueAtTime(0, startTime + attack + release);
-      osc.connect(gain);
-      connectNode(gain);
-      osc.start(startTime);
-      osc.stop(startTime + attack + release);
+
+    // KARPLUS–STRONG IMPLEMENTATION
+
+    // 1. White noise source
+    const noiseBufferSize = c.sampleRate; 
+    const noiseBuffer = c.createBuffer(1, noiseBufferSize, c.sampleRate);
+    const noiseData = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < noiseBufferSize; i++) {
+      noiseData[i] = Math.random() * 2 - 1; // [-1, 1]
     }
-    
+
+    const noiseSource = new AudioBufferSourceNode(c, { loop: true });
+    noiseSource.buffer = noiseBuffer;
+
+    const noiseGain = c.createGain();
+    noiseGain.gain.value = 0; // we open it only when plucking
+
+    // 2. Delay + feedback 
+    const delayNode = c.createDelay();
+    delayNode.delayTime.value = 1 / 440; 
+
+    const feedbackGain = c.createGain();
+    feedbackGain.gain.value = 0.99; // it controls the decay time
+
+    // 3. Internal connections Karplus–Strong
+    noiseSource.connect(noiseGain);
+    noiseGain.connect(delayNode);
+    delayNode.connect(feedbackGain);
+    feedbackGain.connect(delayNode); // feedback loop
+
+    // 4. Start the noise source, initially silent
+    noiseSource.start();
+
+    // Function that performs a Karplus–Strong "pluck" at a given frequency
+    function pluckKarplus(freq, attack, release, startTime) {
+      // Set delay length based on frequency (period ≈ 1/f)
+      delayNode.delayTime.setValueAtTime(1 / freq, startTime);
+
+      // Output node for this note
+      const outGain = c.createGain();
+      outGain.gain.setValueAtTime(0, startTime);
+      outGain.gain.linearRampToValueAtTime(1, startTime + attack);
+      outGain.gain.linearRampToValueAtTime(0, startTime + attack + release);
+
+      // Take the signal from the string loop (feedback) and a bit from the noise source
+      feedbackGain.connect(outGain);
+      noiseGain.connect(outGain);
+
+      // Connect the output to the compressor / destination
+      connectNode(outGain);
+
+      // Burst of noise: "pluck" the string
+      noiseGain.gain.cancelScheduledValues(startTime);
+      noiseGain.gain.setValueAtTime(1, startTime);
+      noiseGain.gain.linearRampToValueAtTime(0, startTime + attack);
+    }
+
+
     async function playStep() {
       await c.resume();
       const now = c.currentTime;
-      const attack = attackSlider.value / 1000;
+      const attack = attackSlider.value / 1000;  // ms -> s
       const release = releaseSlider.value / 1000;
+
       const semitones = parseInt(noteSliders[currentStep].value, 10);
       const freq = noteToFreq(semitones);
+
       highlightStep(currentStep);
-      playNote(freq, attack, release, now);
+      pluckKarplus(freq, attack, release, now);
+
       currentStep = (currentStep + 1) % noteSliders.length;
     }
-    
+
     function startSequencer() {
       if (isPlaying) return;
       isPlaying = true;
       startStop.textContent = 'Stop';
-      const interval = 1000 / parseInt(tempoSlider.value, 10);
+      const interval = 1000 / parseInt(tempoSlider.value, 10); // BPS -> ms
       playStep();
       intervalId = setInterval(() => {
         playStep();
       }, interval);
     }
-    
+
     function stopSequencer() {
       isPlaying = false;
       startStop.textContent = 'Start';
@@ -156,7 +202,7 @@
         intervalId = null;
       }
     }
-    
+
     startStop.addEventListener('click', () => {
       if (isPlaying) {
         stopSequencer();
@@ -164,7 +210,7 @@
         startSequencer();
       }
     });
-    
+
     tempoSlider.addEventListener('change', () => {
       if (isPlaying) {
         stopSequencer();
@@ -174,9 +220,9 @@
 
     document.getElementById('toggleComp').addEventListener('click', () => {
       compressorBypassed = !compressorBypassed;
-      document.getElementById('toggleComp').textContent = compressorBypassed ? 'Bypass Compressor' : 'Use Compressor';
+      document.getElementById('toggleComp').textContent =
+        compressorBypassed ? 'Bypass Compressor' : 'Use Compressor';
     });
-    
   </script>
 </body>
 </html>
