@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>Lezione Web MIDI + Web Audio</h1>
+    <button id="start">Clicca per attivare Audio</button>
+    <div id="log" style="font-family: monospace; white-space: pre"></div>
+
+    <script>
+      const logDiv = document.getElementById("log");
+      const print = (msg) => (logDiv.innerText = msg + "\n" + logDiv.innerText);
+
+      let audioCtx;
+
+      // Policy browser: l'audio parte solo dopo un gesto utente
+      document.getElementById("start").addEventListener("click", async () => {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        print("Audio Context attivo!");
+        setupMIDI();
+      });
+
+      async function setupMIDI() {
+        if (!navigator.requestMIDIAccess) {
+          print("Il tuo browser non supporta MIDI!");
+          return;
+        }
+        const access = await navigator.requestMIDIAccess();
+        // Ascoltiamo su tutti gli input
+        for (let input of access.inputs.values()) {
+          input.onmidimessage = handleMIDIMessage;
+
+          print("MIDI pronto. Premi un tasto.");
+        }
+
+        // --- IL CODICE DELLA LEZIONE ANDRÀ QUI SOTTO ---
+        function handleMIDIMessage(msg) {
+          const [command, note, velocity] = msg.data;
+
+          if (command === 248) return;
+
+          print(`Cmd: ${command} | Note/CC: ${note} | Vel/Val: ${velocity}`);
+
+          // 144 = Note On (canale 1)
+          // 128 = Note Off
+          // 176 = Control Change (CC)
+        }
+      }
+    </script>
+  </body>
+</html>

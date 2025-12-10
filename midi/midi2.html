@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>Lezione Web MIDI + Web Audio</h1>
+    <button id="start">Clicca per attivare Audio</button>
+    <div id="log" style="font-family: monospace; white-space: pre"></div>
+
+    <script>
+      const logDiv = document.getElementById("log");
+      const print = (msg) => (logDiv.innerText = msg + "\n" + logDiv.innerText);
+
+      let audioCtx;
+
+      // Policy browser: l'audio parte solo dopo un gesto utente
+      document.getElementById("start").addEventListener("click", async () => {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        print("Audio Context attivo!");
+        setupMIDI();
+      });
+
+      async function setupMIDI() {
+        if (!navigator.requestMIDIAccess) {
+          print("Il tuo browser non supporta MIDI!");
+          return;
+        }
+        const access = await navigator.requestMIDIAccess();
+        // Ascoltiamo su tutti gli input
+        for (let input of access.inputs.values()) {
+          input.onmidimessage = handleMIDIMessage;
+
+          print("MIDI pronto. Premi un tasto.");
+        }
+
+        // --- IL CODICE DELLA LEZIONE ANDRÀ QUI SOTTO ---
+        const activeOscillators = {}; // Registro per spegnere le note giuste
+
+        function handleMIDIMessage(msg) {
+          const [command, note, velocity] = msg.data;
+
+          // Note On (144) con velocity > 0
+          if (command === 144 && velocity > 0) {
+            playNote(note);
+          }
+
+          // Note Off (128) o Note On con velocity 0
+          if (command === 128 || (command === 144 && velocity === 0)) {
+            stopNote(note);
+          }
+        }
+
+        function playNote(note) {
+          // Formula magica: MIDI -> Hertz
+          const frequency = 440 * Math.pow(2, (note - 69) / 12);
+
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+
+          osc.type = "sawtooth";
+          osc.frequency.value = frequency;
+
+          // Basso volume per sicurezza
+          gain.gain.value = 0.1;
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start();
+
+          // Salviamo l'osc nel registro usando la nota come chiave
+          activeOscillators[note] = { osc, gain };
+        }
+
+        function stopNote(note) {
+          const active = activeOscillators[note];
+          if (active) {
+            // Stop morbido per evitare "click"
+            active.gain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.01);
+            active.osc.stop(audioCtx.currentTime + 0.05);
+            delete activeOscillators[note];
+          }
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>Lezione Web MIDI + Web Audio</h1>
+    
+    <!-- CONTROLLI -->
+    <button id="start">Clicca per attivare Audio</button>
+    
+    <!-- VISUALIZZATORE PARAMETRO -->
+    <div style="margin: 20px 0; border: 2px solid #333; width: 300px; height: 30px; background: #eee;">
+      <!-- Questa è la barra che si muoverà -->
+      <div id="visual-bar" style="width: 50%; height: 100%; background-color: #ff0055; transition: width 0.05s;"></div>
+    </div>
+    <p>Ruota una manopola (CC) per muovere la barra e aprire il filtro!</p>
+
+    <!-- LOG MESSAGGI -->
+    <div id="log" style="font-family: monospace; white-space: pre; background: #f0f0f0; padding: 10px; height: 200px; overflow-y: scroll;"></div>
+
+    <script>
+      const logDiv = document.getElementById("log");
+      const barDiv = document.getElementById("visual-bar");
+      const print = (msg) => (logDiv.innerText = msg + "\n" + logDiv.innerText);
+
+      let audioCtx;
+      // Teniamo traccia del valore del filtro per le nuove note
+      let currentFilterVal = 1000; 
+
+      const activeOscillators = {}; 
+
+      document.getElementById("start").addEventListener("click", async () => {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        print("Audio Context attivo!");
+        setupMIDI();
+      });
+
+      async function setupMIDI() {
+        if (!navigator.requestMIDIAccess) {
+          print("Il tuo browser non supporta MIDI!");
+          return;
+        }
+        const access = await navigator.requestMIDIAccess();
+        
+        for (let input of access.inputs.values()) {
+          input.onmidimessage = handleMIDIMessage;
+        }
+        print("MIDI pronto. Suona e gira le manopole!");
+      }
+
+      function handleMIDIMessage(msg) {
+        const [command, data1, data2] = msg.data;
+
+        // --- 1. GESTIONE NOTE (Note On / Note Off) ---
+        // 144 = Note On Ch1
+        if (command === 144 && data2 > 0) {
+          playNote(data1);
+        }
+        // 128 = Note Off Ch1
+        if (command === 128 || (command === 144 && data2 === 0)) {
+          stopNote(data1);
+        }
+
+        // --- 2. GESTIONE PARAMETRO (Control Change) ---
+        // 176 = Control Change Ch1
+        if (command === 176) {
+          // data1 è il numero del controller (es. 1 è ModWheel, 7 Volume)
+          // data2 è il valore (0-127)
+          
+          const value = data2; // 0 - 127
+          
+          // AGGIORNIAMO IL VISUAL (0-127 -> 0-100%)
+          const percent = (value / 127) * 100;
+          barDiv.style.width = percent + "%";
+          
+          // AGGIORNIAMO L'AUDIO (Mappiamo 0-127 a 50Hz-5000Hz)
+          // Usiamo una mappatura semplice per la lezione
+          currentFilterVal = 50 + (value / 127) * 5000;
+          
+          // Aggiorniamo il filtro di tutte le note che stanno suonando ORA
+          updateActiveFilters(currentFilterVal);
+          
+          print(`CC: ${data1} | Valore: ${value}`);
+        }
+      }
+
+      function playNote(note) {
+        const frequency = 440 * Math.pow(2, (note - 69) / 12);
+
+        const osc = audioCtx.createOscillator();
+        const filter = audioCtx.createBiquadFilter(); // Aggiungiamo il filtro
+        const gain = audioCtx.createGain();
+
+        osc.type = "sawtooth"; // Dente di sega (più ricca per il filtro)
+        osc.frequency.value = frequency;
+
+        // Configurazione Filtro
+        filter.type = "lowpass";
+        filter.frequency.value = currentFilterVal; // Usa il valore corrente della manopola
+
+        gain.gain.value = 0.1;
+
+        // CATENA AUDIO: Osc -> Filter -> Gain -> Casse
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start();
+
+        // Salviamo anche il filtro nel registro per poterlo modificare live
+        activeOscillators[note] = { osc, gain, filter };
+      }
+
+      function stopNote(note) {
+        const active = activeOscillators[note];
+        if (active) {
+          active.gain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05);
+          active.osc.stop(audioCtx.currentTime + 0.1);
+          delete activeOscillators[note];
+        }
+      }
+      
+      // Funzione helper per aggiornare il suono mentre la nota è premuta
+      function updateActiveFilters(frequencyVal) {
+        // Cicliamo su tutte le note attive
+        for (const note in activeOscillators) {
+            const active = activeOscillators[note];
+            // setTargetAtTime evita i "pop" audio durante il cambio rapido
+            active.filter.frequency.setTargetAtTime(frequencyVal, audioCtx.currentTime, 0.05);
+        }
+      }
+    </script>
+  </body>
+</html>

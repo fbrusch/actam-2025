@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web MIDI Controller</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --panel-color: #2b2b2b;
+            --text-color: #e0e0e0;
+            --accent-1: #ff0055; /* Pink */
+            --accent-2: #00e5ff; /* Cyan */
+            --accent-3: #ffdd00; /* Yellow */
+            --key-width: 60px;
+            --key-height: 220px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            user-select: none; /* Prevents text selection while playing */
+        }
+
+        h1 { margin: 10px 0 5px 0; letter-spacing: 1px; }
+        p.subtitle { color: #888; font-size: 0.9rem; margin-bottom: 30px; }
+
+        /* --- CONTROL PANEL --- */
+        .panel {
+            background: var(--panel-color);
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            text-align: center;
+            margin-bottom: 40px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        select {
+            background: #444;
+            color: white;
+            border: 1px solid #555;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 1rem;
+            width: 100%;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        /* Faders Layout */
+        .fader-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .fader-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .fader-group label { font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; color: #aaa; }
+        .fader-group span { font-family: monospace; font-size: 1.1rem; margin-bottom: 5px; }
+
+        input[type=range] {
+            -webkit-appearance: none; /* Override default look */
+            width: 100%;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        /* Custom Slider Styling */
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 6px; cursor: pointer; background: #444; border-radius: 3px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 18px; width: 18px; border-radius: 50%; cursor: pointer; -webkit-appearance: none; margin-top: -6px; box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        /* Colors for specific faders */
+        #cc1::-webkit-slider-thumb { background: var(--accent-1); }
+        #cc74::-webkit-slider-thumb { background: var(--accent-2); }
+        #cc71::-webkit-slider-thumb { background: var(--accent-3); }
+
+        /* --- PIANO KEYBOARD --- */
+        .piano-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            /* Creates a shadow below the piano */
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            border-radius: 0 0 8px 8px;
+        }
+
+        .key {
+            width: var(--key-width);
+            height: var(--key-height);
+            border: 1px solid #000;
+            box-sizing: border-box;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            position: relative; /* Context for z-index */
+        }
+
+        /* White Keys */
+        .key.white {
+            background: #fff;
+            color: #333;
+            z-index: 1;
+            border-radius: 0 0 5px 5px;
+        }
+        .key.white.active {
+            background: #ddd;
+            transform: scaleY(0.98);
+            transform-origin: top;
+            background: linear-gradient(to bottom, #fff 0%, #ccc 100%);
+        }
+
+        /* Black Keys */
+        .key.black {
+            background: #000;
+            color: #fff;
+            height: 60%;
+            width: 40px; /* Fixed width for black keys */
+            position: absolute;
+            top: 0;
+            z-index: 2;
+            border-radius: 0 0 3px 3px;
+            /* Positioning logic handled in HTML style or classes */
+        }
+        .key.black.active {
+            background: #333;
+            background: linear-gradient(to bottom, #000 0%, #444 100%);
+        }
+
+        /* Keyboard Labels */
+        .key span {
+            pointer-events: none;
+            opacity: 0.6;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Web MIDI Controller</h1>
+    <p class="subtitle">1. Select Output &nbsp;|&nbsp; 2. Open Synth Tab &nbsp;|&nbsp; 3. Play</p>
+
+    <div class="panel">
+        <select id="midiOutSelect">
+            <option value="">-- Loading MIDI Outputs... --</option>
+        </select>
+        
+        <div class="fader-container">
+            <!-- FADER 1: MODULATION (Standard CC 1) -->
+            <div class="fader-group">
+                <label>Modulation</label>
+                <span id="val1">0</span>
+                <input type="range" id="cc1" min="0" max="127" value="0" data-cc="1">
+            </div>
+
+            <!-- FADER 2: FILTER CUTOFF (Standard CC 74) -->
+            <div class="fader-group">
+                <label>Cutoff</label>
+                <span id="val74">64</span>
+                <input type="range" id="cc74" min="0" max="127" value="64" data-cc="74">
+            </div>
+
+            <!-- FADER 3: RESONANCE (Standard CC 71) -->
+            <div class="fader-group">
+                <label>Resonance</label>
+                <span id="val71">0</span>
+                <input type="range" id="cc71" min="0" max="127" value="0" data-cc="71">
+            </div>
+        </div>
+    </div>
+
+    <!-- PIANO -->
+    <!-- 
+       Logic: 
+       White keys are flex items (relative flow).
+       Black keys are absolute positioned.
+       Offset calculation: (N * 60px) - (40px / 2) = Center on the line.
+    -->
+    <div class="piano-wrapper">
+        <!-- White Keys (8 keys: C to C) -->
+        <div class="key white" data-note="60"><span>A</span></div> <!-- C -->
+        <div class="key white" data-note="62"><span>S</span></div> <!-- D -->
+        <div class="key white" data-note="64"><span>D</span></div> <!-- E -->
+        <div class="key white" data-note="65"><span>F</span></div> <!-- F -->
+        <div class="key white" data-note="67"><span>G</span></div> <!-- G -->
+        <div class="key white" data-note="69"><span>H</span></div> <!-- A -->
+        <div class="key white" data-note="71"><span>J</span></div> <!-- B -->
+        <div class="key white" data-note="72"><span>K</span></div> <!-- C -->
+
+        <!-- Black Keys (Absolute Position) -->
+        <!-- C# (Between 1st and 2nd white key) -> Left: 60 - 20 = 40px -->
+        <div class="key black" style="left: 40px;" data-note="61"><span>W</span></div>
+        
+        <!-- D# (Between 2nd and 3rd) -> Left: 120 - 20 = 100px -->
+        <div class="key black" style="left: 100px;" data-note="63"><span>E</span></div>
+
+        <!-- F# (Between 4th and 5th) -> Left: 240 (4*60) - 20 = 220px -->
+        <div class="key black" style="left: 220px;" data-note="66"><span>T</span></div>
+
+        <!-- G# (Between 5th and 6th) -> Left: 300 - 20 = 280px -->
+        <div class="key black" style="left: 280px;" data-note="68"><span>Y</span></div>
+
+        <!-- A# (Between 6th and 7th) -> Left: 360 - 20 = 340px -->
+        <div class="key black" style="left: 340px;" data-note="70"><span>U</span></div>
+    </div>
+
+    <script>
+        let midiOutput = null;
+        const select = document.getElementById('midiOutSelect');
+        const faders = document.querySelectorAll('input[type=range]');
+
+        // Keyboard Map (Computer Key -> MIDI Note)
+        const keyMap = {
+            'a': 60, 'w': 61, 's': 62, 'e': 63, 'd': 64, 
+            'f': 65, 't': 66, 'g': 67, 'y': 68, 'h': 69, 
+            'u': 70, 'j': 71, 'k': 72
+        };
+        const pressedKeys = new Set(); 
+
+        // --- 1. MIDI SETUP ---
+        if (navigator.requestMIDIAccess) {
+            navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
+        } else {
+            select.innerHTML = '<option>Web MIDI not supported!</option>';
+        }
+
+        function onMIDISuccess(access) {
+            const outputs = access.outputs;
+            updateOutputs(outputs);
+
+            // Listen for connection changes (plug/unplug)
+            access.onstatechange = (e) => {
+                updateOutputs(access.outputs);
+            };
+        }
+
+        function onMIDIFailure() {
+            select.innerHTML = '<option>Access Denied / Error</option>';
+        }
+
+        function updateOutputs(outputs) {
+            select.innerHTML = '<option value="">-- Select MIDI Output --</option>';
+            outputs.forEach(output => {
+                const option = document.createElement('option');
+                option.value = output.id;
+                option.text = output.name;
+                select.appendChild(option);
+            });
+        }
+
+        select.addEventListener('change', () => {
+            navigator.requestMIDIAccess().then(access => {
+                midiOutput = access.outputs.get(select.value);
+            });
+        });
+
+        // --- 2. SEND FUNCTIONS ---
+        function sendNoteOn(note) {
+            highlightKey(note, true);
+            if (!midiOutput) return;
+            midiOutput.send([0x90, note, 127]); // 144 = Note On
+        }
+
+        function sendNoteOff(note) {
+            highlightKey(note, false);
+            if (!midiOutput) return;
+            midiOutput.send([0x80, note, 0]); // 128 = Note Off
+        }
+
+        function sendCC(ccNumber, value) {
+            if (!midiOutput) return;
+            midiOutput.send([0xB0, ccNumber, value]); // 176 = CC
+        }
+
+        // --- 3. INPUT HANDLING ---
+
+        // Sliders
+        faders.forEach(fader => {
+            fader.addEventListener('input', (e) => {
+                const val = parseInt(e.target.value);
+                const cc = parseInt(e.target.dataset.cc);
+                
+                // Update text display above fader
+                const displayId = 'val' + cc; 
+                document.getElementById(displayId).innerText = val;
+                
+                sendCC(cc, val);
+            });
+        });
+
+        // Mouse / Touch
+        document.querySelectorAll('.key').forEach(key => {
+            const note = parseInt(key.dataset.note);
+            
+            // Mouse
+            key.addEventListener('mousedown', () => sendNoteOn(note));
+            key.addEventListener('mouseup', () => sendNoteOff(note));
+            key.addEventListener('mouseleave', () => sendNoteOff(note));
+            
+            // Touch (for mobile/tablet usage)
+            key.addEventListener('touchstart', (e) => { e.preventDefault(); sendNoteOn(note); });
+            key.addEventListener('touchend', (e) => { e.preventDefault(); sendNoteOff(note); });
+        });
+
+        // Computer Keyboard
+        document.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            if (keyMap[key] && !pressedKeys.has(key)) {
+                pressedKeys.add(key);
+                sendNoteOn(keyMap[key]);
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            if (keyMap[key]) {
+                pressedKeys.delete(key);
+                sendNoteOff(keyMap[key]);
+            }
+        });
+
+        // --- 4. VISUALS ---
+        function highlightKey(note, isActive) {
+            const keyEl = document.querySelector(`.key[data-note="${note}"]`);
+            if (keyEl) {
+                if (isActive) keyEl.classList.add('active');
+                else keyEl.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "midikeys",
+  "version": "1.0.0",
+  "description": "MIDI keyboard web application",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'No build needed for static site'"
+  },
+  "author": "",
+  "license": "MIT"
+}
